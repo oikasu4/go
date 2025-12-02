@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跟我呂遊趣</title>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/isoWeek.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8B4513;
+            --secondary-color: #F5F5DC;
+            --text-color: #333;
+            --light-text-color: #777;
+            --bg-color: #FAF6F0;
+            --card-bg: #FFFFFF;
+            --accent-color: #D2B48C;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            margin: 0 auto;
+            max-width: 480px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .app-container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .app-header {
+            text-align: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background-color: var(--card-bg);
+        }
+        .app-header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .trip-year {
+            border: 1px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: var(--accent-color);
+            margin-left: 8px;
+        }
+        
+        /* Date Navigator */
+        .date-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 5px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid #eee;
+        }
+        .date-item {
+            text-align: center;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        .date-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .date-day {
+            font-size: 12px;
+            font-weight: 300;
+        }
+        .date-num {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .day-header-image {
+            width: 100%;
+            height: 180px;
+            border-radius: 12px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            color: white;
+            display: flex;
+            align-items: flex-end;
+            padding: 15px;
+            box-sizing: border-box;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+        }
+        .day-header-image h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .weather-section {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .weather-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        .weather-forecast {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .weather-item {
+            flex: 0 0 60px;
+            text-align: center;
+            margin-right: 10px;
+        }
+        .weather-item i {
+            font-size: 24px;
+            color: var(--accent-color);
+        }
+
+        /* Timeline */
+        .timeline {
+            margin-top: 20px;
+            position: relative;
+            padding-left: 15px;
+        }
+        .timeline-item {
+            display: flex;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .timeline-time {
+            width: 50px;
+            font-weight: 500;
+            position: relative;
+        }
+        .timeline-time::before {
+            content: '';
+            position: absolute;
+            left: -19px;
+            top: 4px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--card-bg);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 4px;
+            bottom: 0;
+            width: 1px;
+            background-color: #ddd;
+        }
+        .timeline-card {
+            flex-grow: 1;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid var(--accent-color);
+        }
+        .timeline-card h4 {
+            margin: 0 0 5px 0;
+        }
+        .timeline-card p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--light-text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .modal-content {
+            background-color: var(--bg-color);
+            width: 100%;
+            max-width: 480px;
+            max-height: 85%;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .modal-header .type {
+            font-size: 12px;
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+        .modal-header h3 {
+            margin: 5px 0;
+        }
+        .modal-header .location, .modal-header .time {
+            font-size: 14px;
+            color: var(--light-text-color);
+        }
+        .modal-section {
+            margin-bottom: 20px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .modal-section h5 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: var(--light-text-color);
+        }
+        .modal-section p, .modal-section li {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .point-speak-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        .gps-phone {
+             display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .google-maps-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 20px;
+        }
+
+        .fullscreen-card {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .fullscreen-card h1 {
+            font-size: 5vw;
+            margin: 0;
+            transform: rotate(90deg);
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #eee;
+            background-color: var(--card-bg);
+        }
+        .nav-button {
+            cursor: pointer;
+            text-align: center;
+            color: var(--light-text-color);
+        }
+        .nav-button.active {
+            color: var(--primary-color);
+        }
+        .nav-button i {
+            font-size: 20px;
+        }
+        .nav-button p {
+            margin: 3px 0 0 0;
+            font-size: 12px;
+        }
+        
+        /* Budget Page */
+        #budget-page { display: none; }
+        .budget-summary {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .budget-summary p { margin: 0; font-size: 14px; color: var(--light-text-color); }
+        .budget-summary .total-amount {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+        .user-filter {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .user-filter span {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            border-radius: 50%;
+            margin: 0 5px;
+            background-color: #eee;
+            cursor: pointer;
+            text-align: center;
+        }
+        .user-filter span.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .expense-item .paid-by {
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            border-radius: 50%;
+            background-color: #ddd;
+            text-align: center;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+
+        /* Info Page */
+        #info-page { display: none; }
+        .info-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+        }
+        .info-card iframe {
+            width: 100%;
+            height: 200px;
+            border: none;
+            border-radius: 8px;
+        }
+        .emergency-contacts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .contact-item {
+            text-align: center;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .contact-item .number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <h1><i class="fa-solid fa-igloo"></i> 跟我呂遊趣 <span class="trip-year">2025</span></h1>
+        </div>
+
+        <div id="itinerary-page">
+            <div class="date-nav" id="date-navigator"></div>
+            <div class="main-content" id="main-content"></div>
+        </div>
+        
+        <div id="budget-page" class="main-content"></div>
+        <div id="info-page" class="main-content"></div>
+
+        <div class="bottom-nav">
+            <div class="nav-button active" data-page="itinerary-page">
+                <i class="fa-solid fa-route"></i>
+                <p>行程</p>
+            </div>
+            <div class="nav-button" data-page="budget-page">
+                <i class="fa-solid fa-wallet"></i>
+                <p>帳本</p>
+            </div>
+            <div class="nav-button" data-page="info-page">
+                <i class="fa-solid fa-circle-info"></i>
+                <p>資訊</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for event details -->
+    <div id="event-modal" class="modal">
+        <div class="modal-content" id="modal-content-inner"></div>
+    </div>
+    
+    <!-- Fullscreen card for point-speak -->
+    <div id="fullscreen-card" class="fullscreen-card">
+        <h1 id="fullscreen-text"></h1>
+    </div>
+
+    <script>
+        dayjs.extend(window.dayjs_plugin_isoWeek);
+        
+        const tripData = {
+            tripName: "芬蘭旅行",
+            startDate: "2025-02-14",
+            days: [
+                {
+                    day: 1,
+                    title: "赫爾辛基",
+                    image: "https://images.unsplash.com/photo-1572202996677-36228336d3b3?q=80&w=1974&auto=format&fit=crop",
+                    weather: { city: "Helsinki", temps: [ -5, -6, -7, -8, -7, -6 ] },
+                    events: [
+                        { time: "16:00", type: "FLIGHT", title: "抵達赫爾辛基", details: "抵達赫爾辛基-萬塔機場(HEL)，準備開始旅程！", icon: "fa-plane-arrival" },
+                        { time: "17:30", type: "SHOPPING", title: "逛 Kamppi Helsinki", location: "Urho Kekkosen katu 1, 00100 Helsinki", details: "赫爾辛基市中心的現代化購物中心，同時也是交通樞紐。靜默教堂也在此處。", icon: "fa-bag-shopping" },
+                        { time: "18:30", type: "FOOD", title: "晚餐 Momotoko Kamppi", location: "Fredrikinkatu 48, 00100 Helsinki", details: "PDF中提到的日式拉麵店，在寒冷的天氣裡溫暖你的胃。", icon: "fa-utensils",
+                          pointSpeak: [{ "日式拉麵": "Ramen" }]
+                        },
+                        { time: "20:00", type: "HOTEL", title: "入住飯店", details: "Check-in 飯店，好好休息。", icon: "fa-bed" }
+                    ]
+                },
+                {
+                    day: 2,
+                    title: "赫爾辛基 → 羅瓦涅米",
+                    image: "https://images.unsplash.com/photo-1570258803112-67475654c62c?q=80&w=2070&auto=format&fit=crop",
+                    weather: { city: "Helsinki", temps: [ -6, -7, -8, -9, -8, -7 ] },
+                    events: [
+                        { time: "09:00", type: "SIGHTSEEING", title: "赫爾辛基主教座堂 & 議院廣場", location: "Unioninkatu 29, 00170 Helsinki", details: "赫爾辛基的象徵，純白色的新古典主義建築，非常壯觀。", icon: "fa-landmark" },
+                        { time: "10:30", type: "SIGHTSEEING", title: "烏斯佩斯基大教堂", location: "Kanavakatu 1, 00160 Helsinki", details: "北歐最大的東正教教堂，紅磚金頂的拜占庭式建築，與白色大教堂形成鮮明對比。", icon: "fa-place-of-worship" },
+                        { time: "12:00", type: "FOOD", title: "碼頭市集廣場 午餐", location: "Eteläranta, 00170 Helsinki", details: "露天市集，可以品嚐芬蘭道地的鮭魚湯或其他小吃。", icon: "fa-utensils", 
+                          pointSpeak: [{ "鮭魚湯": "Lohikeitto" }, { "市場": "Kauppatori" }]
+                        },
+                        { time: "14:00", type: "SIGHTSEEING", title: "岩石教堂", location: "Lutherinkatu 3, 00100 Helsinki", details: "從天然岩石中挖掘出來的教堂，設計獨特，音響效果極佳。", icon: "fa-church" },
+                        { time: "20:00", type: "TRANSPORT", title: "搭乘夜舖火車前往羅瓦涅米", location: "赫爾辛基中央車站", details: "體驗芬蘭國鐵(VR)的臥鋪火車，一覺醒來就抵達北極圈！", icon: "fa-train" }
+                    ]
+                },
+                {
+                    day: 3,
+                    title: "羅瓦涅米",
+                    image: "https://images.unsplash.com/photo-1544376798-89b942e5d32c?q=80&w=2070&auto=format&fit=crop",
+                    weather: { city: "Rovaniemi", temps: [ -10, -12, -14, -15, -13, -11 ] },
+                    events: [
+                        { time: "09:00", type: "TRANSPORT", title: "抵達羅瓦涅米 & 前往聖誕老人村", details: "歡迎來到聖誕老人的官方故鄉！", icon: "fa-bus" },
+                        { time: "10:00", type: "HOTEL", title: "入住 Santa's Igloos Arctic Circle", location: "Joulumaankuja 8, 96930 Rovaniemi", details: "PDF推薦的極光玻璃屋，準備享受獨特的住宿體驗。", icon: "fa-igloo" },
+                        { time: "11:00", type: "ACTIVITY", title: "與聖誕老人聊天", location: "Santa Claus Office", details: "跨越北極圈線，並與聖誕老人本人見面合影。", icon: "fa-gift" },
+                        { time: "13:00", type: "FOOD", title: "午餐", details: "在聖誕老人村內享用午餐，可以嘗試PDF推薦的馴鹿肉。", icon: "fa-utensils",
+                          pointSpeak: [{ "馴鹿肉": "Poronkäristys" }]
+                        },
+                        { time: "14:30", type: "ACTIVITY", title: "哈士奇雪橇", details: "體驗由可愛的哈士奇們帶領，在雪地中奔馳的快感。", icon: "fa-dog" },
+                        { time: "16:00", type: "ACTIVITY", title: "馴鹿雪橇", details: "乘坐聖誕老人的坐騎，悠閒地穿梭在雪白森林中。", icon: "fa-sleigh" },
+                        { time: "19:00", type: "ACTIVITY", title: "等待極光", details: "在溫暖的玻璃屋內，躺在床上，欣賞窗外的雪景，幸運的話就能看見絢麗的北極光！", icon: "fa-star" }
+                    ]
+                },
+                {
+                    day: 4,
+                    title: "拉普蘭活動",
+                    image: "https://images.unsplash.com/photo-1517015462521-8e342d4b8c04?q=80&w=2070&auto=format&fit=crop",
+                    weather: { city: "Lapland", temps: [ -11, -13, -15, -16, -15, -12 ] },
+                    events: [
+                        { time: "10:00", type: "ACTIVITY", title: "芬蘭桑拿", details: "體驗最道地的芬蘭桑拿，感受冰火五重天的暢快。大部分飯店都有提供。", icon: "fa-hot-tub-person" },
+                        { time: "12:00", type: "SHOPPING", title: "聖誕老人村購物", details: "在聖誕老人村的商店購買紀念品，並從聖誕老人郵局寄出蓋有特別郵戳的明信片。", icon: "fa-shop" },
+                        { time: "14:00", type: "ACTIVITY", title: "冰釣體驗", details: "在結冰的湖面上鑽洞，體驗拉普蘭地區的傳統冬季活動。", icon: "fa-fish-fins" },
+                        { time: "20:00", type: "ACTIVITY", title: "極光 Safari", details: "參加當地的極光團，由專業嚮導帶領到光害較少的地方追尋極光。", icon: "fa-moon" }
+                    ]
+                },
+                {
+                    day: 5,
+                    title: "土庫 (Bonus)",
+                    image: "https://images.unsplash.com/photo-1629819662369-d3523a115856?q=80&w=2013&auto=format&fit=crop",
+                    weather: { city: "Turku", temps: [ -2, -3, -4, -3, -2, -1 ] },
+                    events: [
+                        { time: "10:00", type: "TRANSPORT", title: "前往土庫", details: "從赫爾辛基搭乘火車前往芬蘭的前首都 - 土庫。", icon: "fa-train" },
+                        { time: "12:00", type: "SIGHTSEEING", title: "土庫城堡", location: "Linnankatu 80, 20100 Turku", details: "芬蘭現存最古老、規模最大的中世紀城堡之一，現在是歷史博物館。", icon: "fa-chess-rook" },
+                        { time: "14:00", type: "SIGHTSEEING", title: "土庫大教堂", location: "Tuomiokirkonkatu 1, 20500 Turku", details: "芬蘭信義會的主教座堂，也是芬蘭最重要的宗教建築之一。", icon: "fa-landmark-dome" },
+                        { time: "16:00", type: "SIGHTSEEING", title: "嚕嚕米世界 (夏季限定)", location: "Muumimaailma, 21100 Naantali", details: "PDF推薦的景點，全世界第一座以嚕嚕米為主題的樂園。請注意此為夏季限定，此處僅為行程規劃參考。", icon: "fa-hippo" }
+                    ]
+                }
+            ],
+            budget: {
+                users: ["呂", "遊", "趣"],
+                expenses: [
+                    { item: "芬蘭航空機票", amount: 25000, paidBy: "呂" },
+                    { item: "Santa's Igloos x1晚", amount: 15000, paidBy: "呂" },
+                    { item: "赫爾辛基飯店 x1晚", amount: 4500, paidBy: "遊" },
+                    { item: "哈士奇雪橇", amount: 3000, paidBy: "趣" },
+                    { item: "Day 2 晚餐", amount: 1200, paidBy: "遊" },
+                ]
+            },
+            info: {
+                mapUrl: "https://www.google.com/maps/d/embed?mid=1Z5d1-Vu4qY8x8yJ4oG2h8pP2c-Y&hl=en_US&ehbc=2E312F",
+                emergency: [
+                    { name: "緊急救援 (警察/救護)", number: "112" }
+                ],
+                links: [
+                    { name: "Visit Finland 官網", url: "https://www.visitfinland.com/"}
+                ]
+            }
+        };
+
+        const mainContent = document.getElementById('main-content');
+        const dateNavigator = document.getElementById('date-navigator');
+        const modal = document.getElementById('event-modal');
+        const modalContent = document.getElementById('modal-content-inner');
+        const fullscreenCard = document.getElementById('fullscreen-card');
+        const fullscreenText = document.getElementById('fullscreen-text');
+        
+        const budgetPage = document.getElementById('budget-page');
+        const infoPage = document.getElementById('info-page');
+        const itineraryPage = document.getElementById('itinerary-page');
+        const navButtons = document.querySelectorAll('.nav-button');
+
+        let currentDayIndex = 0;
+
+        function renderDay(dayIndex) {
+            currentDayIndex = dayIndex;
+            const dayData = tripData.days[dayIndex];
+            
+            // Render Header Image
+            let html = `
+                <div class="day-header-image" style="background-image: url('${dayData.image}')">
+                    <h2>Day ${dayData.day}: ${dayData.title}</h2>
+                </div>
+            `;
+            
+            // Render Weather
+            html += `
+                <div class="weather-section">
+                    <h3>${dayData.weather.city} 即時天氣資訊 (示意)</h3>
+                    <div class="weather-forecast">
+            `;
+            const now = new Date();
+            dayData.weather.temps.forEach((temp, i) => {
+                html += `
+                    <div class="weather-item">
+                        <p>${(now.getHours() + i) % 24}:00</p>
+                        <i class="fa-solid fa-sun"></i>
+                        <p>${temp}°</p>
+                    </div>
+                `;
+            });
+            html += `</div></div>`;
+
+            // Render Timeline
+            html += `<div class="timeline">`;
+            dayData.events.forEach((event, index) => {
+                html += `
+                    <div class="timeline-item" onclick="showEventDetails(${dayIndex}, ${index})">
+                        <div class="timeline-time">${event.time}</div>
+                        <div class="timeline-card" style="border-left-color: ${getEventColor(event.type)}">
+                            <h4><i class="fa-solid ${event.icon} fa-fw"></i> ${event.title}</h4>
+                            <p>${event.details.split('。')[0]}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            
+            mainContent.innerHTML = html;
+            updateDateNav();
+        }
+
+        function getEventColor(type) {
+            switch(type) {
+                case 'FLIGHT': return '#3498db';
+                case 'TRANSPORT': return '#2ecc71';
+                case 'SIGHTSEEING': return '#e67e22';
+                case 'FOOD': return '#e74c3c';
+                case 'HOTEL': return '#9b59b6';
+                case 'ACTIVITY': return '#f1c40f';
+                case 'SHOPPING': return '#1abc9c';
+                default: return 'var(--accent-color)';
+            }
+        }
+        
+        function showEventDetails(dayIndex, eventIndex) {
+            const event = tripData.days[dayIndex].events[eventIndex];
+            let content = `
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <div class="modal-header">
+                    <p class="type">${event.type}</p>
+                    <h3><i class="fa-solid ${event.icon} fa-fw"></i> ${event.title}</h3>
+                    <p class="time"><i class="fa-solid fa-clock fa-fw"></i> ${event.time}</p>
+                    ${event.location ? `<p class="location"><i class="fa-solid fa-location-dot fa-fw"></i> ${event.location}</p>` : ''}
+                </div>
+                <div class="modal-section">
+                    <h5><i class="fa-solid fa-circle-info fa-fw"></i> 關於此處</h5>
+                    <p>${event.details}</p>
+                </div>
+            `;
+
+            if (event.pointSpeak) {
+                content += `
+                    <div class="modal-section">
+                        <h5><i class="fa-solid fa-language fa-fw"></i> 指差對話 (Point & Speak)</h5>
+                `;
+                event.pointSpeak.forEach(item => {
+                    const key = Object.keys(item)[0];
+                    content += `<div class="point-speak-item" onclick="showFullscreenCard('${key}')"><span>${key}</span><span style="color:var(--light-text-color);">${item[key]}</span></div>`;
+                });
+                content += `</div>`;
+            }
+
+            if (event.location) {
+                 content += `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}" target="_blank" class="google-maps-btn"><i class="fa-solid fa-map-location-dot"></i> Google Maps 導航</a>`;
+            }
+
+            modalContent.innerHTML = content;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function showFullscreenCard(text) {
+            fullscreenText.textContent = text;
+            fullscreenCard.style.display = 'flex';
+        }
+        
+        function renderDateNav() {
+            let html = '';
+            const start = dayjs(tripData.startDate);
+            tripData.days.forEach((day, index) => {
+                const currentDate = start.add(index, 'day');
+                html += `
+                    <div class="date-item ${index === currentDayIndex ? 'active' : ''}" onclick="renderDay(${index})">
+                        <div class="date-day">${currentDate.format('ddd').toUpperCase()}</div>
+                        <div class="date-num">${currentDate.format('DD')}</div>
+                    </div>
+                `;
+            });
+            dateNavigator.innerHTML = html;
+        }
+
+        function updateDateNav() {
+            document.querySelectorAll('.date-item').forEach((item, index) => {
+                item.classList.toggle('active', index === currentDayIndex);
+            });
+        }
+        
+        function renderBudgetPage(filterUser = 'All') {
+            let filteredExpenses = tripData.budget.expenses;
+            if (filterUser !== 'All') {
+                filteredExpenses = tripData.budget.expenses.filter(e => e.paidBy === filterUser);
+            }
+            
+            const totalAmount = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+            
+            let html = `
+                <div class="budget-summary">
+                    <p>總金額 (台幣)</p>
+                    <p class="total-amount">NT$ ${totalAmount.toLocaleString()}</p>
+                    <p>此為前端示意版本，資料無法同步儲存</p>
+                </div>
+                <div class="user-filter">
+                    <span class="${filterUser === 'All' ? 'active' : ''}" onclick="renderBudgetPage('All')">All</span>
+            `;
+            tripData.budget.users.forEach(user => {
+                html += `<span class="${filterUser === user ? 'active' : ''}" onclick="renderBudgetPage('${user}')">${user}</span>`;
+            });
+            html += `</div>`;
+
+            filteredExpenses.forEach(expense => {
+                html += `
+                    <div class="expense-item">
+                        <div>
+                            <p style="margin:0; font-weight:500;">${expense.item}</p>
+                            <p style="margin:5px 0 0 0; font-size:12px; color:var(--light-text-color);">支付人: ${expense.paidBy}</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <p style="margin:0; font-weight:500;">NT$ ${expense.amount.toLocaleString()}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            budgetPage.innerHTML = html;
+        }
+        
+        function renderInfoPage() {
+            let html = `
+                <div class="info-card">
+                    <h3><i class="fa-solid fa-map-marked-alt"></i> 全行程地圖</h3>
+                    <iframe src="${tripData.info.mapUrl}"></iframe>
+                    <a href="https://www.google.com/maps/d/viewer?mid=1Z5d1-Vu4qY8x8yJ4oG2h8pP2c-Y&hl=en_US" target="_blank" class="google-maps-btn" style="margin-top:10px;">開啟 Google Maps 導航</a>
+                </div>
+                <div class="info-card">
+                    <h3><i class="fa-solid fa-shield-halved"></i> 緊急聯絡 & 支援</h3>
+                    <div class="emergency-contacts">
+            `;
+            tripData.info.emergency.forEach(contact => {
+                html += `
+                    <div class="contact-item">
+                        <p>${contact.name}</p>
+                        <p class="number">${contact.number}</p>
+                    </div>
+                `;
+            });
+            html += `
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3><i class="fa-solid fa-link"></i> 實用連結</h3>`;
+            tripData.info.links.forEach(link => {
+                html += `<a href="${link.url}" target="_blank" class="google-maps-btn" style="background-color: var(--accent-color); margin-bottom:10px;">${link.name}</a>`;
+            });
+            html += `</div>`;
+            infoPage.innerHTML = html;
+        }
+
+        // Navigation Logic
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pageId = button.getAttribute('data-page');
+                
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                itineraryPage.style.display = 'none';
+                budgetPage.style.display = 'none';
+                infoPage.style.display = 'none';
+                
+                document.getElementById(pageId).style.display = 'block';
+
+                if(pageId === 'budget-page') renderBudgetPage();
+                if(pageId === 'info-page') renderInfoPage();
+            });
+        });
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+        
+        fullscreenCard.addEventListener('click', () => {
+            fullscreenCard.style.display = 'none';
+        });
+
+        // Initial Render
+        renderDateNav();
+        renderDay(0);
+    </script>
+</body>
+</html>
